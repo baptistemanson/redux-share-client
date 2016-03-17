@@ -22,24 +22,25 @@ class SyncReduxClient {
    * @param store
    */
   init (store = null) {
-    try {
-      this.ws = new WebSocket(this.url);
-    } catch (e) {
-      this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
-      return;
-    }
+    this.ws = new WebSocket(this.url);
+
     // No store previously declared
-    if(this.store === null) {
-      if(store === null) {
+    if (this.store === null) {
+      if (store === null) {
         throw 'A store is required when the server have never been initialised with it';
       }
       this.store = store;
       // Store already defined and param not null
-    } else if(store !== null) {
+    } else if (store !== null) {
       this.store = store;
     } else {
       // Store already defined but param null, ignoring
     }
+
+    this.ws.onerror = () => {
+      this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
+    };
+
     this.ws.onopen = function () {
       if (this.debug) {
         console.log("Sync connected!");
@@ -57,7 +58,7 @@ class SyncReduxClient {
       this.store.dispatch(JSON.parse(event.data));
     }
     this.ws.onclose = () => {
-      if(this.autoReconnect) {
+      if (this.autoReconnect) {
         setTimeout(this.init.bind(this), 1000)
       }
     };
