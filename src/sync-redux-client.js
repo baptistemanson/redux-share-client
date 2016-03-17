@@ -5,14 +5,28 @@ class SyncReduxClient {
     this.url = url;
     this.readyToSend = false;
     this.debug = false;
+    this.autoReconnect = true;
   }
 
+  /**
+   * Set if the client must send debug information to the console
+   * @param debug
+   */
   setDebug (debug = false) {
     this.debug = debug;
   }
 
+  /**
+   * Init a connection with the server
+   * @param store
+   */
   init (store) {
-    this.ws = new WebSocket(this.url);
+    try {
+      this.ws = new WebSocket(this.url);
+    } catch (e) {
+      this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
+      return;
+    }
     this.store = store;
     this.ws.onopen = function () {
       if (this.debug) {
@@ -30,13 +44,26 @@ class SyncReduxClient {
       }
       this.store.dispatch(JSON.parse(event.data));
     }
-    this.ws.onclose = () => setTimeout(this.init.bind(this), 1000);
+    this.ws.onclose = () => {
+      if(this.autoReconnect) {
+        setTimeout(this.init.bind(this), 1000)
+      }
+    };
   }
 
+  /**
+   * Send an action to the server
+   *
+   * @param action
+   */
   send (action) {
     this.ws.send(JSON.stringify(action));
   }
 
+  /**
+   * Middleware for Redux
+   * @returns {Function}
+   */
   getClientMiddleware () {
     return store => next => action => {
       //need to enrich next action.
@@ -52,6 +79,15 @@ class SyncReduxClient {
       if (action.type === "@@SYNC-CONNECT-SERVER-START") this.init(store);
       return result;
     }
+  }
+
+  /**
+   * Set the client behavior in case the socket connection is closed/notStarted
+   *
+   * @param reconnect
+   */
+  setAutoReconnect (reconnect) {
+    this.autoReconnect = reconnect;
   }
 }
 ;
