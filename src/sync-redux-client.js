@@ -3,6 +3,7 @@
 class SyncReduxClient {
   constructor (url) {
     this.url = url;
+    this.store = null;
     this.readyToSend = false;
     this.debug = false;
     this.autoReconnect = true;
@@ -20,14 +21,25 @@ class SyncReduxClient {
    * Init a connection with the server
    * @param store
    */
-  init (store) {
+  init (store = null) {
     try {
       this.ws = new WebSocket(this.url);
     } catch (e) {
       this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
       return;
     }
-    this.store = store;
+    // No store previously declared
+    if(this.store === null) {
+      if(store === null) {
+        throw 'A store is required when the server have never been initialised with it';
+      }
+      this.store = store;
+      // Store already defined and param not null
+    } else if(store !== null) {
+      this.store = store;
+    } else {
+      // Store already defined but param null, ignoring
+    }
     this.ws.onopen = function () {
       if (this.debug) {
         console.log("Sync connected!");
@@ -76,7 +88,7 @@ class SyncReduxClient {
         this.send(action);
       }
       //should be migrated to a reducer?
-      if (action.type === "@@SYNC-CONNECT-SERVER-START") this.init(store);
+      if (action.type === "@@SYNC-CONNECT-SERVER-START") this.init();
       return result;
     }
   }
