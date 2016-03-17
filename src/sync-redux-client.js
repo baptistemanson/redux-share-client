@@ -88,7 +88,7 @@ class SyncReduxClient {
         this.send(action);
       }
       //should be migrated to a reducer?
-      if (action.type === "@@SYNC-CONNECT-SERVER-START") this.init();
+      if (action.type === "@@SYNC-CONNECT-SERVER-START") this.init(store);
       return result;
     }
   }
