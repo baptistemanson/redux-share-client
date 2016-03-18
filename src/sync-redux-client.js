@@ -1,12 +1,13 @@
 //standardize to work the same way as the server
 
 class SyncReduxClient {
-  constructor (url, autoReconnect = true) {
+  constructor (url, autoReconnect = true, onPreSend = null) {
     this.url = url;
     this.store = null;
     this.readyToSend = false;
     this.debug = false;
     this.autoReconnect = autoReconnect;
+    this.onPreSend = onPreSend;
   }
 
   /**
@@ -70,6 +71,9 @@ class SyncReduxClient {
    * @param action
    */
   send (action) {
+    if(this.onPreSend !== null && !this.onPreSend.apply(this, [action, this.ws])) {
+      return;
+    }
     this.ws.send(JSON.stringify(action));
   }
 
@@ -85,7 +89,7 @@ class SyncReduxClient {
       }
       let result = next(action);
       // If the action have been already emited, we don't send it back to the server
-      if (this.readyToSend && action.senderId === undefined) {
+      if (this.readyToSend) {
         this.send(action);
       }
       //should be migrated to a reducer?
