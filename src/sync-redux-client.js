@@ -1,12 +1,12 @@
 //standardize to work the same way as the server
 
 class SyncReduxClient {
-  constructor (url) {
+  constructor (url, autoReconnect = true) {
     this.url = url;
     this.store = null;
     this.readyToSend = false;
     this.debug = false;
-    this.autoReconnect = true;
+    this.autoReconnect = autoReconnect;
   }
 
   /**
@@ -92,15 +92,6 @@ class SyncReduxClient {
       if (action.type === "@@SYNC-CONNECT-SERVER-START") this.init(store);
       return result;
     }
-  }
-
-  /**
-   * Set the client behavior in case the socket connection is closed/notStarted
-   *
-   * @param reconnect
-   */
-  setAutoReconnect (reconnect) {
-    this.autoReconnect = reconnect;
   }
 }
 ;
