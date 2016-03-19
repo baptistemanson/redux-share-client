@@ -1,21 +1,26 @@
 //standardize to work the same way as the server
 
 class SyncReduxClient {
-  constructor (url, autoReconnect = true, onPreSend = null) {
+  constructor (url, options) {
+
+    let defaultOptions = {autoReconnect:true,autoReconnectDelay:1000,debug:false,shouldSend:null};
+
     this.url = url;
     this.store = null;
     this.readyToSend = false;
-    this.debug = false;
-    this.autoReconnect = autoReconnect;
-    this.onPreSend = onPreSend;
+
+    this.options = Object.assign(defaultOptions,options);
+    console.log(this.options);
+    this.autoReconnect = options.autoReconnect;
+    
+    this.shouldSend = options.shouldSend;
+    this.debug = options.debug;
   }
 
-  /**
-   * Set if the client must send debug information to the console
-   * @param debug
-   */
-  setDebug (debug = false) {
-    this.debug = debug;
+  log() {
+    if (this.debug) {
+        console.log("redux-share-client: ",...arguments);
+      }
   }
 
   /**
@@ -23,29 +28,22 @@ class SyncReduxClient {
    * @param store
    */
   init (store = null) {
+    this.log('Initializing the socket');
     this.ws = new WebSocket(this.url);
 
-    // No store previously declared
-    if (this.store === null) {
-      if (store === null) {
-        throw 'A store is required when the server have never been initialised with it';
-      }
-      this.store = store;
-      // Store already defined and param not null
-    } else if (store !== null) {
-      this.store = store;
-    } else {
-      // Store already defined but param null, ignoring
+    if(store === null ) {
+       throw 'A redux store is required';
+       this.log("Please provide a redux store as the parameter of the init function.");
     }
+    
+    this.store = store;
 
     this.ws.onerror = () => {
       this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
     };
 
     this.ws.onopen = function () {
-      if (this.debug) {
-        console.log("Sync connected!");
-      }
+      
       //send a state dump
       this.readyToSend = true;
       let state = this.store.getState() || {};
@@ -54,16 +52,17 @@ class SyncReduxClient {
 
     this.ws.onmessage = event => {
       if (this.debug) {
-        console.log("Sync: Received some stuff from the server", event.data);
+        this.log("Sync: Received some stuff from the server", event.data);
       }
       this.store.dispatch(JSON.parse(event.data));
     }
+    
     this.ws.onclose = () => {
       if (this.autoReconnect) {
-        setTimeout(this.init.bind(this), 1000)
+        setTimeout(this.init.bind(this, this.store), this.options.autoReconnectDelay)
       }
-    };
   }
+}
 
   /**
    * Send an action to the server
@@ -71,10 +70,12 @@ class SyncReduxClient {
    * @param action
    */
   send (action) {
-    if(this.onPreSend !== null && !this.onPreSend.apply(this, [action, this.ws])) {
+    if(this.shouldSend !== null && !this.shouldSend.apply(this, [action, this.ws])) {
       return;
     }
-    this.ws.send(JSON.stringify(action));
+    else {
+      this.ws.send(JSON.stringify(action));
+    }
   }
 
   /**
@@ -84,9 +85,7 @@ class SyncReduxClient {
   getClientMiddleware () {
     return store => next => action => {
       //need to enrich next action.
-      if (this.debug) {
-        console.log('Sync: dispatching ', action);
-      }
+      this.log('Dispatching ', action);
       let result = next(action);
       // If the action have been already emited, we don't send it back to the server
       if (this.readyToSend) {

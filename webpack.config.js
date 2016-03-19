@@ -19,7 +19,7 @@ module.exports = [
   entry: {
     "client":"./src/sync-redux-client"
   },
-  target:'node',
+  target:'web',
   output: {
     path: path.join(__dirname, "dist"),
     filename: "[name].bundle.js",
