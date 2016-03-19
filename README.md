@@ -1,4 +1,16 @@
 # redux-share-client
+
+```
+  /$$$$$$  /$$                                    
+ /$$__  $$| $$                                    
+| $$  \__/| $$$$$$$   /$$$$$$   /$$$$$$   /$$$$$$ 
+|  $$$$$$ | $$__  $$ |____  $$ /$$__  $$ /$$__  $$
+ \____  $$| $$  \ $$  /$$$$$$$| $$  \__/| $$$$$$$$
+ /$$  \ $$| $$  | $$ /$$__  $$| $$      | $$_____/
+|  $$$$$$/| $$  | $$|  $$$$$$$| $$      |  $$$$$$$
+ \______/ |__/  |__/ \_______/|__/       \_______/
+```
+
 Share redux state across the network between multiple clients and server!
 
 The system is currently provided with an express middleware for the server side implementation, while the client is agnostic.
@@ -8,7 +20,7 @@ This package is experimental and API will change.
 
 The client a bit more complex, as your need to sync your state with the server upon connection.
 
-The server is available for express [here](https://github.com/baptistemanson/redux-share-server)
+The [server side is available here](https://github.com/baptistemanson/redux-share-server) and you can also get some [examples of usage](https://github.com/baptistemanson/redux-share-examples).
 
 ```javascript
 //client.js
