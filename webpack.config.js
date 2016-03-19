@@ -17,7 +17,7 @@ fs.readdirSync('node_modules')
 module.exports = [
 {
   entry: {
-    "client":"./src/sync-redux-client"
+    "client":"./src/redux-share-client"
   },
   target:'web',
   output: {
