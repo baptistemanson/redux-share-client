@@ -24,9 +24,11 @@ store.dispatch({type:"@@SYNC-CONNECT-SERVER-START"});
 ```
 
 
-## List of special actions (client)
+## List of special actions types
 
 
-* @@SYNC-CONNECT-SERVER-START: called on the client to init state synchronization. This action will not be seen by the server.
-* @@SYNC-CONNECT-SERVER-END: called on the client after the connection is successful, with the state in the payload. This action is the first the server will see.
+* @@SYNC-CONNECT-SERVER-START: call it to initiate the connection. This action will not be seen by the server.
+* @@SYNC-CONNECT-SERVER-SUCCESS: called on the client after the connection is successful, with the state in the payload. This action is the first the server will see.
+* @@SYNC-CONNECT-SERVER-FAILED: dispatched when the connection fails.
+* @@SYNC-CONNECT-SERVER-FAILED-FATAL: dispatched when the connection fails, and it won't try to reconnect.
 
