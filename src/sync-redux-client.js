@@ -2,29 +2,34 @@
 
 class SyncReduxClient {
   constructor (url, options) {
+    //properties
+    const defaultOptions = {
+      //delay between reconnect tries
+      autoReconnectDelay:1000,
+      //null for unlimited autoReconnect, 0 will disable autoReconnect, 1 will try only once etc.
+      autoReconnectMaxTries:null,
+      //callback called just before sending to the server.
+      shouldSend:null,
+      debug:false,
+    };
 
-    let defaultOptions = {autoReconnect:true,autoReconnectDelay:1000,debug:false,shouldSend:null};
+    this.options = Object.assign({},defaultOptions,options);
 
+    //state
     this.url = url;
     this.store = null;
     this.readyToSend = false;
-
-    this.options = Object.assign(defaultOptions,options);
-    console.log(this.options);
-    this.autoReconnect = options.autoReconnect;
-    
-    this.shouldSend = options.shouldSend;
-    this.debug = options.debug;
+    this.connectTriesCount = 0;
   }
 
   log() {
-    if (this.debug) {
+    if (this.options.debug) {
         console.log("redux-share-client: ",...arguments);
       }
   }
 
   /**
-   * Init a connection with the server
+   * Inits a connection with the server
    * @param store
    */
   init (store = null) {
@@ -32,8 +37,7 @@ class SyncReduxClient {
     this.ws = new WebSocket(this.url);
 
     if(store === null ) {
-       throw 'A redux store is required';
-       this.log("Please provide a redux store as the parameter of the init function.");
+       throw 'You must provide a redux store as the sole parameter of the init function.';
     }
     
     this.store = store;
@@ -42,8 +46,9 @@ class SyncReduxClient {
       this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
     };
 
-    this.ws.onopen = function () {
-      
+    this.ws.onopen = function () { 
+      this.log('Socket initialized, sending a dump of the full state to the server.'); 
+      this.connectTriesCount = 0;
       //send a state dump
       this.readyToSend = true;
       let state = this.store.getState() || {};
@@ -51,41 +56,49 @@ class SyncReduxClient {
     }.bind(this);
 
     this.ws.onmessage = event => {
-      if (this.debug) {
-        this.log("Sync: Received some stuff from the server", event.data);
-      }
+      this.log("Received an action from the server", event.data);
       this.store.dispatch(JSON.parse(event.data));
     }
     
     this.ws.onclose = () => {
-      if (this.autoReconnect) {
-        setTimeout(this.init.bind(this, this.store), this.options.autoReconnectDelay)
-      }
+      this.readyToSend = false;
+      this.log("Socket closed.")
+      this.reconnect();      
   }
 }
+  reconnect() {
+    if (this.options.autoReconnectMaxTries === null || this.connectTriesCount < this.options.autoReconnectMaxTries) {
+        this.log("Reconnecting automatically... "+this.connectTriesCount++);
+        setTimeout(this.init.bind(this, this.store), this.options.autoReconnectDelay)
+      }
+      else if(this.connectTriesCount == this.options.autoReconnectMaxTries) {
+        this.log("Reached the maximum of authorized reconnect tries.");
+        this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED-FATAL", url: this.url});
+      }
+  }
 
   /**
-   * Send an action to the server
+   * Sends an action to the server
    *
    * @param action
    */
   send (action) {
-    if(this.shouldSend !== null && !this.shouldSend.apply(this, [action, this.ws])) {
+    if( typeof(this.options.shouldSend) == 'function' && !this.options.shouldSend.apply(this, [action, this.ws])) {
       return;
     }
     else {
+      this.log('Sending to the server the action ', action);
       this.ws.send(JSON.stringify(action));
     }
   }
 
   /**
-   * Middleware for Redux
+   * Get the middleware for Redux
    * @returns {Function}
    */
   getClientMiddleware () {
     return store => next => action => {
       //need to enrich next action.
-      this.log('Dispatching ', action);
       let result = next(action);
       // If the action have been already emited, we don't send it back to the server
       if (this.readyToSend) {
