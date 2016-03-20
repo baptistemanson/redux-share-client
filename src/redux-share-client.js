@@ -48,7 +48,7 @@ class ReduxShareClient {
       //need to enrich next action.
       let result = next(action);
       // If the action have been already emited, we don't send it back to the server
-      if (this.readyToSend) {
+      if (this.readyToSend && action.origin !== 'server') {
         this.send(action);
       }
       //should be migrated to a reducer?
@@ -107,8 +107,9 @@ class ReduxShareClient {
       return;
     }
     else {
-      this.log('Sending to the server the action ', action);
-      this.ws.send(JSON.stringify(action));
+      let tracedAction = Object.assign({},action,{origin:"client" });
+      this.log('Sending to the server the action ', tracedAction);
+      this.ws.send(JSON.stringify(tracedAction ));
     }
   }
 
