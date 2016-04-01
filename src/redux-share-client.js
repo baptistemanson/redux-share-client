@@ -29,6 +29,8 @@ class ReduxShareClient {
       autoReconnectMaxTries:null,
       //if set, this function will be called before receiving each action. Allow you to modify the action.
       onActionReceived: action => action,
+      //if set, this function will be be called when the connection is established with the server
+      onConnect: ws => true,
       //if set, this function will filter all actions before dispatching. Returns bool.
       shouldDispatch:() => true, 
       //if set, this function will filter all actions before sending. Returns bool.
@@ -48,34 +50,45 @@ class ReduxShareClient {
   /**
    * Get the middleware for Redux
    *
-           Local      WS
-             +        +
+
+      store.dispatch  WS
              |        |
+             |  onActionReceived()
              |        |
-             v        v  onActionReceived
-        +----+--------+----+
+             v        v 
+        +------------------+
         |                  |
         |                  |
         |    Middleware    |
         |                  |
         |                  |
         +--------+---------+
-                 |       ShouldDispatch?
-        +--------v---------+
-        |                  |
-        |     Reducers     |
-        |      (next)      |
-        |                  |
-        +--------+---------+
+                 |      
+         ShouldDispatch()? --------+
+                 |                 |
+      (next middleware...then)     |
+        +--------v---------+       |
+        |                  |       |
+        |                  |       |
+        |     Reducers     |       |
+        |                  |       |
+        |                  |       |
+        +--------+---------+       |
+                 |                 |
+                 |<----------------+
                  |
         +--------v---------+
         |                  |
         |    Middleware    |
         |                  |
         +--------+---------+
-                 |       ShouldSend?
-                 v
+                 |      
+                 V
+            ShouldSend()? 
+                 |
+                 V
                  WS
+    + onConnect.
 
    * @returns {Function}
    */
@@ -125,6 +138,10 @@ class ReduxShareClient {
 
     this.ws.onopen = function () { 
       this.log('Socket initialized, sending a dump of the full state to the server.'); 
+      if (typeof(this.options.onConnect) == 'function') {
+          this.options.onConnect.apply(this,[this.ws]);
+      }
+
       this.connectTriesCount = 0;
       //send a state dump
       let state = this.store.getState() || {};
