@@ -133,13 +133,14 @@ class ReduxShareClient {
     }.bind(this);
 
     this.ws.onmessage = event => {
-      this.log("Received an action from the server", event.data);
+      let action = event.data
+      this.log("Received an action from the server", action);
 
       if (typeof(this.options.onActionReceived) == 'function') {
-          event.data = this.options.onActionReceived.apply(this, [event.data])
+          action = this.options.onActionReceived.apply(this, [action])
       }
 
-      this.store.dispatch(JSON.parse(event.data));
+      this.store.dispatch(JSON.parse(action));
     }
     
     this.ws.onclose = () => {
