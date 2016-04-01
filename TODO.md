@@ -5,9 +5,9 @@
 - [ ] Implement rollback + replay
 - [ ] Force resync implementation
 - [ ] Test performance
-- [ ] Fix bundling, adding more than commonjs...
 - [ ] Investigate a queue of actions for performance.
-
+- [ ] Binary protocol? Need to detect versions and encode messages.
+- [ ] Prefix with TRIP
 
 design intentions
 

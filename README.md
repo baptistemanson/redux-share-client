@@ -20,6 +20,40 @@ This package is experimental and API will change.
 
 The client a bit more complex, as your need to sync your state with the server upon connection.
 
+```
+
+           Local      WS
+             +        +
+             |        |
+             |        |
+             v        v  onActionReceived
+        +----+--------+----+
+        |                  |
+        |                  |
+        |    Middleware    |
+        |                  |
+        |                  |
+        +--------+---------+
+                 |       ShouldDispatch?
+        +--------v---------+
+        |                  |
+        |     Reducers     |
+        |      (next)      |
+        |                  |
+        +--------+---------+
+                 |
+        +--------v---------+
+        |                  |
+        |    Middleware    |
+        |                  |
+        +--------+---------+
+                 |       ShouldSend?
+                 v
+                 WS
+
+```
+
+
 The [server side is available here](https://github.com/baptistemanson/redux-share-server) and you can also get some [examples of usage](https://github.com/baptistemanson/redux-share-examples).
 
 ```javascript
