@@ -1,11 +1,13 @@
+var WebSocket = require('ws');
+
 class ReduxShareClient {
 
   /**
   * Constructs a new ReduxShareClient.
   *
   * @param string url a fully qualified websocket url.
-  * @param options. 
-  * 
+  * @param options.
+  *
   * defaultOptions = {
       //delay between reconnect tries
       autoReconnectDelay:1000,
@@ -14,7 +16,7 @@ class ReduxShareClient {
       //if set, this function will be called before receiving each action. Allow you to modify the action.
       onActionReceived: action => action,
       //if set, this function will filter all actions before dispatching. Returns bool.
-      shouldDispatch:() => true, 
+      shouldDispatch:() => true,
       //if set, this function will filter all actions before sending. Returns bool.
       shouldSend: () => true,
       debug:false,
@@ -32,7 +34,7 @@ class ReduxShareClient {
       //if set, this function will be be called when the connection is established with the server
       onConnect: ws => true,
       //if set, this function will filter all actions before dispatching. Returns bool.
-      shouldDispatch:() => true, 
+      shouldDispatch:() => true,
       //if set, this function will filter all actions before sending. Returns bool.
       shouldSend: () => true,
       debug:false,
@@ -55,7 +57,7 @@ class ReduxShareClient {
              |        |
              |  onActionReceived()
              |        |
-             v        v 
+             v        v
         +------------------+
         |                  |
         |                  |
@@ -63,7 +65,7 @@ class ReduxShareClient {
         |                  |
         |                  |
         +--------+---------+
-                 |      
+                 |
          ShouldDispatch()? --------+
                  |                 |
       (next middleware...then)     |
@@ -82,9 +84,9 @@ class ReduxShareClient {
         |    Middleware    |
         |                  |
         +--------+---------+
-                 |      
+                 |
                  V
-            ShouldSend()? 
+            ShouldSend()?
                  |
                  V
                  WS
@@ -129,15 +131,15 @@ class ReduxShareClient {
     if(store === null ) {
        throw 'You must provide a redux store as the sole parameter of the init function.';
     }
-    
+
     this.store = store;
 
     this.ws.onerror = () => {
       this.store.dispatch({type: "@@SYNC-CONNECT-SERVER-FAILED", url: this.url});
     };
 
-    this.ws.onopen = function () { 
-      this.log('Socket initialized, sending a dump of the full state to the server.'); 
+    this.ws.onopen = function () {
+      this.log('Socket initialized, sending a dump of the full state to the server.');
       if (typeof(this.options.onConnect) == 'function') {
           this.options.onConnect.apply(this,[this.ws]);
       }
@@ -159,11 +161,11 @@ class ReduxShareClient {
 
       this.store.dispatch(JSON.parse(action));
     }
-    
+
     this.ws.onclose = () => {
       this.readyToSend = false;
       this.log("Socket closed.")
-      this.reconnect();      
+      this.reconnect();
   }
 }
 
