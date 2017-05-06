@@ -25,7 +25,8 @@
     "webpack": "^1.12.14",
     "webpack-dev-server": "^1.14.1",
     "webpack-hot-middleware": "^2.10.0"
-    },
+  },
   "dependencies": {
+    "ws": "^2.3.1"
   }
 }
