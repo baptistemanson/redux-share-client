@@ -27,7 +27,7 @@ class ReduxShareClient {
     const defaultOptions = {
       //delay between reconnect tries
       autoReconnectDelay:1000,
-      //null for unlimited autoReconnect, 0 | null will disable autoReconnect, 1 will try only once etc.
+      //null for unlimited autoReconnect, 0 or  null will disable autoReconnect, 1 will try only once etc.
       autoReconnectMaxTries:null,
       //if set, this function will be called before receiving each action. Allow you to modify the action.
       onActionReceived: action => action,
